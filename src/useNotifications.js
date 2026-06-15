@@ -13,23 +13,19 @@ export async function registerNotifications(supabase) {
     return false
   }
 
-  // Register service worker
   const registration = await navigator.serviceWorker.register('/sw.js')
 
-  // Request permission
   const permission = await Notification.requestPermission()
   if (permission !== 'granted') {
     console.warn('Notification permission denied')
     return false
   }
 
-  // Subscribe to push
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
   })
 
-  // Save subscription to Supabase
   const { error } = await supabase
     .from('devices')
     .upsert({
