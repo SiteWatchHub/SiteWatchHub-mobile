@@ -18,12 +18,28 @@ export default function ImageGrid({ camera, onBack }) {
       if (error) {
         setError(error.message)
       } else {
-        // Generate signed URLs for each image
         const withUrls = await Promise.all(data.map(async (image) => {
-          const { data: urlData } = await supabase.storage
+          // Full size for modal
+          const { data: fullUrl } = await supabase.storage
             .from('images')
             .createSignedUrl(image.storage_path, 3600)
-          return { ...image, url: urlData?.signedUrl }
+
+          // Thumbnail — resized to 400px via Supabase transform
+          const { data: thumbUrl } = await supabase.storage
+            .from('images')
+            .createSignedUrl(image.storage_path, 3600, {
+              transform: {
+                width: 400,
+                height: 400,
+                resize: 'cover'
+              }
+            })
+
+          return {
+            ...image,
+            url: fullUrl?.signedUrl,
+            thumbnailUrl: thumbUrl?.signedUrl
+          }
         }))
         setImages(withUrls)
       }
@@ -68,7 +84,7 @@ export default function ImageGrid({ camera, onBack }) {
             className="relative aspect-square bg-gray-900 rounded-xl overflow-hidden hover:opacity-80 transition-opacity"
           >
             <img
-              src={image.url}
+              src={image.thumbnailUrl}
               alt={formatDate(image.captured_at)}
               className="w-full h-full object-cover"
             />
