@@ -31,25 +31,27 @@ export default function App() {
 
   // Handle notification taps
   useEffect(() => {
-    // App opened fresh from a notification tap
-    const params = new URLSearchParams(window.location.search)
-    const imageId = params.get('image')
-    if (imageId) setNotificationImageId(imageId)
-
-    // App already open when notification is tapped
-    const handleMessage = (event) => {
-      if (event.data?.type === 'NAVIGATE') {
-        const params = new URLSearchParams(event.data.url.split('?')[1])
-        const imageId = params.get('image')
-        if (imageId) {
-          // Clear first to force re-mount even if same imageId
-          setNotificationImageId(null)
-          setTimeout(() => setNotificationImageId(imageId), 0)
-        }
+    function checkUrl() {
+      const params = new URLSearchParams(window.location.search)
+      const imageId = params.get('image')
+      if (imageId) {
+        setNotificationImageId(imageId)
+      } else {
+        setNotificationImageId(null)
       }
     }
-    navigator.serviceWorker?.addEventListener('message', handleMessage)
-    return () => navigator.serviceWorker?.removeEventListener('message', handleMessage)
+  
+    // Check on load
+    checkUrl()
+  
+    // Check whenever the app comes back into focus
+    document.addEventListener('visibilitychange', checkUrl)
+    window.addEventListener('popstate', checkUrl)
+  
+    return () => {
+      document.removeEventListener('visibilitychange', checkUrl)
+      window.removeEventListener('popstate', checkUrl)
+    }
   }, [])
 
   async function handleLogin() {

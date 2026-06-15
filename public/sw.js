@@ -14,16 +14,18 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close()
   const url = event.notification.data?.url ?? '/'
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.postMessage({ type: 'NAVIGATE', url })
-          client.focus()
-          return
-        }
+      if (clientList.length > 0) {
+        // App is open — navigate it to the new URL
+        const client = clientList[0]
+        client.navigate(url)
+        client.focus()
+      } else {
+        // App is closed — open it
+        clients.openWindow(url)
       }
-      clients.openWindow(url)
     })
   )
 })
