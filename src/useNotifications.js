@@ -8,28 +8,39 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export async function registerNotifications(supabase) {
-  console.log('1. starting registration')
-  console.log('VAPID key:', VAPID_PUBLIC_KEY)
-
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.warn('Push notifications not supported')
     return false
   }
-  console.log('2. push supported')
 
   const registration = await navigator.serviceWorker.register('/sw.js')
-  console.log('3. service worker registered:', registration)
 
   const permission = await Notification.requestPermission()
-  console.log('4. permission:', permission)
-  if (permission !== 'granted') return false
+  if (permission !== 'granted') {
+    console.warn('Notification permission denied')
+    return false
+  }
 
-  console.log('5. subscribing to push...')
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
   })
-  console.log('6. subscribed:', subscription)
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const { error } = await supabase
+    .from('devices')
+    .upsert({
+      user_id: user.id,
+      subscription: JSON.stringify(subscription),
+      enabled: true
+    }, { onConflict: 'user_id' })
+
+  if (error) {
+    console.error('Failed to save subscription:', error)
+    return false
+  }
+
+  return true
 }
 
 export async function unregisterNotifications(supabase) {
