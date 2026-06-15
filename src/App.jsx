@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import SiteList from './SiteList'
 import CameraList from './CameraList'
 import ImageGrid from './ImageGrid'
+import Settings from './Settings'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -12,6 +13,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [selectedSite, setSelectedSite] = useState(null)
   const [selectedCamera, setSelectedCamera] = useState(null)
+  const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -105,12 +107,20 @@ export default function App() {
             <span className="text-blue-500 text-xl">⬡</span>
             <span className="text-lg font-semibold">SiteWatchHub</span>
           </button>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Settings
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
@@ -163,6 +173,9 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Settings sheet */}
+      {showSettings && <Settings onClose={() => setShowSettings(false)} />}
 
     </div>
   )
