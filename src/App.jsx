@@ -35,7 +35,8 @@ export default function App() {
       const params = new URLSearchParams(window.location.search)
       const imageId = params.get('image')
       if (imageId) {
-        setNotificationImageId(imageId)
+        setNotificationImageId(null) // clear first
+        requestAnimationFrame(() => setNotificationImageId(imageId))
       } else {
         setNotificationImageId(null)
       }
@@ -204,6 +205,7 @@ export default function App() {
       {/* Notification image modal */}
       {notificationImageId && (
         <NotificationImage
+          key={notificationImageId}
           imageId={notificationImageId}
           onClose={() => {
             setNotificationImageId(null)
