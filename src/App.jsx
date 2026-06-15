@@ -41,7 +41,11 @@ export default function App() {
       if (event.data?.type === 'NAVIGATE') {
         const params = new URLSearchParams(event.data.url.split('?')[1])
         const imageId = params.get('image')
-        if (imageId) setNotificationImageId(imageId)
+        if (imageId) {
+          // Clear first to force re-mount even if same imageId
+          setNotificationImageId(null)
+          setTimeout(() => setNotificationImageId(imageId), 0)
+        }
       }
     }
     navigator.serviceWorker?.addEventListener('message', handleMessage)

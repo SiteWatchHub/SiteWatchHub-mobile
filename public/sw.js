@@ -16,15 +16,13 @@ self.addEventListener('notificationclick', event => {
   const url = event.notification.data?.url ?? '/'
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // If app is already open, focus it and navigate
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.focus()
           client.postMessage({ type: 'NAVIGATE', url })
+          client.focus()
           return
         }
       }
-      // Otherwise open a new window
       clients.openWindow(url)
     })
   )
