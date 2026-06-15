@@ -4,6 +4,7 @@ import SiteList from './SiteList'
 import CameraList from './CameraList'
 import ImageGrid from './ImageGrid'
 import Settings from './Settings'
+import NotificationImage from './NotificationImage'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -14,6 +15,7 @@ export default function App() {
   const [selectedSite, setSelectedSite] = useState(null)
   const [selectedCamera, setSelectedCamera] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [notificationImageId, setNotificationImageId] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -25,6 +27,25 @@ export default function App() {
     })
 
     return () => subscription.unsubscribe()
+  }, [])
+
+  // Handle notification taps
+  useEffect(() => {
+    // App opened fresh from a notification tap
+    const params = new URLSearchParams(window.location.search)
+    const imageId = params.get('image')
+    if (imageId) setNotificationImageId(imageId)
+
+    // App already open when notification is tapped
+    const handleMessage = (event) => {
+      if (event.data?.type === 'NAVIGATE') {
+        const params = new URLSearchParams(event.data.url.split('?')[1])
+        const imageId = params.get('image')
+        if (imageId) setNotificationImageId(imageId)
+      }
+    }
+    navigator.serviceWorker?.addEventListener('message', handleMessage)
+    return () => navigator.serviceWorker?.removeEventListener('message', handleMessage)
   }, [])
 
   async function handleLogin() {
@@ -173,6 +194,17 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Notification image modal */}
+      {notificationImageId && (
+        <NotificationImage
+          imageId={notificationImageId}
+          onClose={() => {
+            setNotificationImageId(null)
+            window.history.replaceState({}, '', '/')
+          }}
+        />
+      )}
 
       {/* Settings sheet */}
       {showSettings && <Settings onClose={() => setShowSettings(false)} />}
